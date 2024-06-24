@@ -1,0 +1,2 @@
+# Include subdirectory
+add_subdirectory(spi)
