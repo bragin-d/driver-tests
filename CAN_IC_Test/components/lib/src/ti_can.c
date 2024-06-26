@@ -32,12 +32,12 @@ void spi_init() {
     };
 
     // Initialize the SPI bus
-    ret = spi_bus_initialize(HSPI_HOST, &buscfg, 1);
+    ret = spi_bus_initialize(VSPI_HOST, &buscfg, 1);
     assert(ret == ESP_OK);
 
     // Configure the SPI device
     spi_device_interface_config_t devcfg = {
-        .clock_speed_hz = 10 * 1000 * 1000,    // Clock out at 10 MHz
+        .clock_speed_hz = 26 * 1000 * 1000,    // Clock out at 10 MHz
         .mode = 0,                             // SPI mode 0
         
         .spics_io_num = PIN_NUM_CS,            // CS pin
@@ -49,43 +49,34 @@ void spi_init() {
     };
 
     // Attach the SPI device to the SPI bus
-    ret = spi_bus_add_device(HSPI_HOST, &devcfg, &spi);
+    ret = spi_bus_add_device(VSPI_HOST, &devcfg, &spi);
     assert(ret == ESP_OK);
 }
 
 uint8_t spiRegisterWrite(uint16_t reg_addr, uint32_t reg_value, uint32_t * pointer) {
 
-    uint8_t tx_buffer[4];
-    uint8_t rx_buffer[4];
+    uint8_t tx_buffer[5];
+    uint8_t rx_buffer[5];
+
+    //tx_buffer[0] = 0xBB;
+    tx_buffer[1] = 0xFF;
+    tx_buffer[2] = 0xFF;
+    tx_buffer[3] = 0xAA;
+    tx_buffer[4] = 0xAA;
     
-    // tx_buffer[0] = (uint8_t)reg_value;
-    // tx_buffer[1] = (uint8_t)(reg_value >> 8);
-    // tx_buffer[2] = (uint8_t)(reg_value >> 16);
-    // tx_buffer[3] = (uint8_t)(reg_value >> 24);
-
-    memcpy(tx_buffer, &reg_value, sizeof(uint32_t));
-
-
     spi_transaction_t t;
-    
-    memset(&t, 0, sizeof(t)); 
 
-    t.cmd = SPI_WRITE_OPCODE; // Not sure
+    memset(&t, 0, sizeof(spi_transaction_t));
+
+    t.cmd = SPI_WRITE_OPCODE;
     t.addr = reg_addr;
-    t.length = 4 * 8; // length byte + 4*bytes data 
-    //t.flags = SPI_TRANS_USE_TXDATA;
-    t.rxlength = 4 * 8;
+    t.length = 5 * 8; // length byte
+    t.rxlength = 5 * 8;
     t.rx_buffer = NULL;
     t.tx_buffer = tx_buffer;
-    //memcpy(t.tx_data, &reg_value, sizeof(uint32_t));
 
     spi_device_transmit(spi, &t);
 
-    if (pointer != NULL)
-    {
-        memcpy(pointer, rx_buffer, sizeof(uint32_t));
-    }
-    
 
     return 0;
 }
@@ -100,7 +91,7 @@ uint32_t spiRegisterRead(uint16_t reg_addr) {
 
     spi_transaction_t t;
     
-    memset(&t, 0, sizeof(t)); 
+    memset(&t, 0, sizeof(spi_transaction_t)); 
 
     t.cmd = SPI_READ_OPCODE;
     t.addr = reg_addr;
@@ -133,50 +124,80 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
 
     // TODO: Cover edge cases for values in structs + error reporting
 
+    value = spiRegisterRead(0x0808);
 
-    /*value = spiRegisterRead(MODE_SEL);
+    printf("Test reg value: %lX\n", value);
 
-    if ((value & 0xC0) != STANDBY_MODE)
-    {
-        printf("Device not in standby mode, mode: %lX\n", value & 0xC0);
-        
-        value &= ~CLEAN_MODE;
-        value |= STANDBY_MODE;
+    value = spiRegisterRead(0x0808);
 
-        printf("Intended mode: %lX\n", value & 0xC0);
-        spiRegisterWrite(MODE_SEL, value, NULL);
+    printf("Test reg value: %lX\n", value);
 
-        value = spiRegisterRead(MODE_SEL);
-        printf("New mode: %lX\n", value & 0xC0);
-    }
-    else
-    {
-        printf("Already in STANDBY\n");
+    spiRegisterWrite(0x0808, 0xBB, NULL);
 
-        value &= ~CLEAN_MODE;
-        value |= NORMAL_MODE;
+    value = spiRegisterRead(0x0808);
 
-        printf("Intended mode: %lX\n", value & 0xC0);
-        spiRegisterWrite(MODE_SEL, value, NULL);
+    printf("Test reg value: %lX\n", value);
 
-        value = spiRegisterRead(MODE_SEL);
-        printf("New mode: %lX\n", value & 0xC0);
-    }*/
 
+    // init |= CAN_CCCR_CCE;
+
+    // printf("Intended CCCR value: %lX\n", init);
+
+    // spiRegisterWrite(CCCR, init, NULL);
+
+    // init = spiRegisterRead(CCCR);
+
+    // printf("New CCCR value: %lX\n", init);
+
+////////////////////////////////////////////////////////////
+
+    // init &= ~CAN_CCCR_CSR;
+
+    // printf("Intended CCCR value: %lX\n", init);
+
+    // spiRegisterWrite(CCCR, init, NULL);
+
+    // init = spiRegisterRead(CCCR);
+
+    // printf("New CCCR value: %lX\n", init);
+
+////////////////////////////////////////////////////////////
+
+    // init |= CAN_CCCR_CCE;
+
+    // printf("Intended CCCR value: %lX\n", init);
+
+    // spiRegisterWrite(CCCR, init, NULL);
+
+    // init = spiRegisterRead(CCCR);
+
+    // printf("New CCCR value: %lX\n", init);
+
+////////////////////////////////////////////////
+//     uint32_t check;
     
-    value = spiRegisterRead(0x0808);
+//     check = spiRegisterRead(0x0808);
 
-    printf("Reg content: %lX\n", value);
+//     printf("Reg content: %lX\n", check);
 
-    spiRegisterWrite(0x0808, 0x87654321, NULL);
+// ////////////////////////////////////////////////
 
-    usleep(1000);
+//     uint32_t reg_end_check = 0;
 
-    value = spiRegisterRead(0x0808);
+//     reg_end_check = spiRegisterRead(0x1004);
 
-    printf("New reg content: %lX\n", value);
+//     printf("Endian reg: %lX\n", reg_end_check);
 
+//     spiRegisterWrite(0x0808, value | (0x1 << 16U), NULL);
 
+//     usleep(1000);
+
+//     value = spiRegisterRead(0x0808);
+
+//     printf("Prev reg value: %lX\n", check);
+//     printf("New reg content: %lX\n", value);
+
+///////////////////////////////////////////////
 
 
     // spiRegisterWrite(MODE_SEL, mode, &value);
