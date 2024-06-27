@@ -428,7 +428,7 @@ typedef struct
     uint8_t data_byte_1;
     uint8_t data_byte_0;
 
-} TXElement;
+} TXFIFOElement;
 
 #define ESI_SHFT 31U
 #define XTD_SHFT 30U
@@ -452,6 +452,8 @@ typedef struct
 #define SPI_WRITE_OPCODE 0x61
 #define SPI_READ_OPCODE  0x41
 
+#define LENGTH_BYTE 0x4
+
 #define ENDIAN_REGISTER_TEST 0x1004
 
 void spi_init();
@@ -461,4 +463,5 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
                  const TiMRAMParams     * MRAM);
 uint8_t setSIDFilters(SID_filter * filters, TiMRAMParams * MRAM);
 uint8_t setXIDFilters(XID_filter * filters, TiMRAMParams * MRAM);
-uint8_t sendCAN(TiMRAMParams * MRAM, TXElement * TXE);
+uint8_t sendCAN(TiMRAMParams * MRAM, TXFIFOElement * TXE);
+
