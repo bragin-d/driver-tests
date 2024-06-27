@@ -45,7 +45,8 @@ void spi_init() {
         .pre_cb = NULL,
         .post_cb = NULL,
         .command_bits = 8,                     // Important! 
-        .address_bits = 16                     // Important!
+        .address_bits = 16,                     // Important!
+        .dummy_bits = 0
     };
 
     // Attach the SPI device to the SPI bus
@@ -53,62 +54,7 @@ void spi_init() {
     assert(ret == ESP_OK);
 }
 
-uint8_t spiRegisterWrite(uint16_t reg_addr, uint32_t reg_value, uint32_t * pointer) {
 
-    uint8_t tx_buffer[5];
-    uint8_t rx_buffer[5];
-
-    //tx_buffer[0] = 0xBB;
-    tx_buffer[1] = 0xFF;
-    tx_buffer[2] = 0xFF;
-    tx_buffer[3] = 0xAA;
-    tx_buffer[4] = 0xAA;
-    
-    spi_transaction_t t;
-
-    memset(&t, 0, sizeof(spi_transaction_t));
-
-    t.cmd = SPI_WRITE_OPCODE;
-    t.addr = reg_addr;
-    t.length = 5 * 8; // length byte
-    t.rxlength = 5 * 8;
-    t.rx_buffer = NULL;
-    t.tx_buffer = tx_buffer;
-
-    spi_device_transmit(spi, &t);
-
-
-    return 0;
-}
-
-
-uint32_t spiRegisterRead(uint16_t reg_addr) {
-    
-    // TODO: Process global status byte
-    // TODO: Consider switching to working with pointers
-
-    uint8_t rx_buffer[5];
-
-    spi_transaction_t t;
-    
-    memset(&t, 0, sizeof(spi_transaction_t)); 
-
-    t.cmd = SPI_READ_OPCODE;
-    t.addr = reg_addr;
-    t.length = 5 * 8; // length byte
-    t.rxlength = 5 * 8;
-    t.rx_buffer = rx_buffer;
-    t.tx_buffer = NULL;
-
-    // Transmit the dummy bytes to read the actual data
-    spi_device_transmit(spi, &t);
-
-    // Combine the received bytes into a 32-bit value
-    uint32_t reg_value = ((uint64_t)rx_buffer[1] << 24) |
-                ((uint64_t)rx_buffer[2] << 16) | ((uint64_t)rx_buffer[3] << 8) | (rx_buffer[4]);
-
-    return reg_value;
-}
 
 
 
@@ -116,7 +62,7 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
                  const TiMRAMParams     * MRAM)
 {
     
-    uint32_t value = 0;
+    //uint32_t value = 0;
 
     spi_init();
 
@@ -124,146 +70,39 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
 
     // TODO: Cover edge cases for values in structs + error reporting
 
-    value = spiRegisterRead(0x0808);
+    uint32_t mode = 0;
 
-    printf("Test reg value: %lX\n", value);
+    mode = spiRegisterRead(MODE_SEL);
 
-    value = spiRegisterRead(0x0808);
-
-    printf("Test reg value: %lX\n", value);
-
-    spiRegisterWrite(0x0808, 0xBB, NULL);
-
-    value = spiRegisterRead(0x0808);
-
-    printf("Test reg value: %lX\n", value);
-
-
-    // init |= CAN_CCCR_CCE;
-
-    // printf("Intended CCCR value: %lX\n", init);
-
-    // spiRegisterWrite(CCCR, init, NULL);
-
-    // init = spiRegisterRead(CCCR);
-
-    // printf("New CCCR value: %lX\n", init);
-
-////////////////////////////////////////////////////////////
-
-    // init &= ~CAN_CCCR_CSR;
-
-    // printf("Intended CCCR value: %lX\n", init);
-
-    // spiRegisterWrite(CCCR, init, NULL);
-
-    // init = spiRegisterRead(CCCR);
-
-    // printf("New CCCR value: %lX\n", init);
-
-////////////////////////////////////////////////////////////
-
-    // init |= CAN_CCCR_CCE;
-
-    // printf("Intended CCCR value: %lX\n", init);
-
-    // spiRegisterWrite(CCCR, init, NULL);
-
-    // init = spiRegisterRead(CCCR);
-
-    // printf("New CCCR value: %lX\n", init);
-
-////////////////////////////////////////////////
-//     uint32_t check;
-    
-//     check = spiRegisterRead(0x0808);
-
-//     printf("Reg content: %lX\n", check);
-
-// ////////////////////////////////////////////////
-
-//     uint32_t reg_end_check = 0;
-
-//     reg_end_check = spiRegisterRead(0x1004);
-
-//     printf("Endian reg: %lX\n", reg_end_check);
-
-//     spiRegisterWrite(0x0808, value | (0x1 << 16U), NULL);
-
-//     usleep(1000);
-
-//     value = spiRegisterRead(0x0808);
-
-//     printf("Prev reg value: %lX\n", check);
-//     printf("New reg content: %lX\n", value);
-
-///////////////////////////////////////////////
-
-
-    // spiRegisterWrite(MODE_SEL, mode, &value);
-
-    // printf("Was there: %lX\n", value);
-
-    // spiRegisterWrite(MODE_SEL, mode, &value);
-
-    // printf("Is there: %lX\n", value);
-
-
-    // uint32_t mode = spiRegisterRead(MODE_SEL);
-    // printf("MODE: %lX\n", mode);
-
-    // mode |= STANDBY_MODE;
-    // printf("Target value: %lX\n",mode);
-    // spiRegisterWrite(MODE_SEL, mode);
-
-    // usleep(1000000);
-
-    // mode = spiRegisterRead(MODE_SEL);
-    // printf("Actual value: %lX\n", mode);
-
-    // uint32_t init = spiRegisterRead(CCCR);
-    // printf("CCCR: %lu\n", init);
-
-    // //init |= (CAN_CCCR_CCE | CAN_CCCR_INIT);
-    // init &= ~CAN_CCCR_CSR;
-
-    // printf("Updated CCCR value: %lu\n", init);
-
-    // spiRegisterWrite(CCCR, (0b01 << 0U));
-
-    // usleep(1000000);
-
-    // uint32_t new_init = spiRegisterRead(CCCR);
-
-    // printf("New CCCR: %lu\n", new_init);
-
-/*
     // Standby Mode Check
     if ((mode & 0xC0) != STANDBY_MODE)
     {   printf("Device not in STANDBY_MODE, MODE: %lu, setting STANDBY_MODE\n", mode & 0xC0);
+        
+        mode &= ~CLEAN_MODE;
         mode |= STANDBY_MODE;
-        spiRegisterWrite(MODE_SEL, mode);
+        
+        spiRegisterWrite(MODE_SEL, mode, NULL);
         printf("STANDBY_MODE set successfully\n");
 
         mode = spiRegisterRead(MODE_SEL);
-        printf("New device mode: %lu, NEEDED: %d\n", mode & 0xC0, STANDBY_MODE);
+        printf("New device mode: %lX, NEEDED: %X\n", mode & 0xC0, STANDBY_MODE);
     }
-
-    printf("Device in STANDBY_MODE, mode: %lu\n", mode);
-
-    printf("MRAM gets zeroed out\n");
-
+    else
+    {
+        printf("Device in STANDBY_MODE, mode: %lX\n", mode);
+    }
+    
 
     // Initialization Mode
     // TODO: Check whether CSR needs to be written before CCE and INIT
     uint32_t init = spiRegisterRead(CCCR);
 
-    printf("Initial CCCR content: %lu\n", init);
+    printf("Initial CCCR content: %lX\n", init);
 
+    init &= ~(CAN_CCCR_CCE | CAN_CCCR_INIT);
     init |= (CAN_CCCR_CCE | CAN_CCCR_INIT);
     init &= ~CAN_CCCR_CSR;
 
-    printf("Updated CCCR value: %lu\n", init);
     
     uint32_t bit_timing = 0;
     uint32_t trans_delay_comp = 0;
@@ -279,11 +118,11 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
     if (CAN_MODE == 0)
     {
         printf("Device in CAN mode\n");
-        spiRegisterWrite(CCCR, init);
+        spiRegisterWrite(CCCR, init, NULL);
 
         init = spiRegisterRead(CCCR);
 
-        printf("New CCCR reg value: %lu\n", init);
+        printf("New CCCR reg value: %lX\n", init);
     
         bit_timing = spiRegisterRead(NBTP); 
 
@@ -301,13 +140,13 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
         bit_timing |= CAN_TIME_SEG_2(phase2);
         bit_timing |= CAN_PRESCALER(prescaler);
 
-        printf("Updated NBTP value: %lu\n", bit_timing);
+        printf("Intended NBTP value: %lX\n", bit_timing);
 
-        spiRegisterWrite(NBTP, bit_timing);
+        spiRegisterWrite(NBTP, bit_timing, NULL);
 
         bit_timing = spiRegisterRead(NBTP);
 
-        printf("New NBTP reg content: %lu\n", bit_timing);
+        printf("New NBTP reg content: %lX\n", bit_timing);
 
     }
     else if (CAN_MODE == 1)
@@ -317,10 +156,19 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
         if (BIT_RATE_SWITCH)    init |= CCCR_BRSE;
         if (FD)     init |= CCCR_FDOE;
 
-        spiRegisterWrite(CCCR, init);
+        printf("Intended CCCR reg value: %lX\n", init);
+
+        spiRegisterWrite(CCCR, init, NULL);
+
+        init = spiRegisterRead(CCCR);
+
+        printf("New CCCR reg value: %lX\n", init);
 
         bit_timing       =  spiRegisterRead(DBTP);
         trans_delay_comp =  spiRegisterRead(TDCR);
+
+        printf("BT reg value: %lX\n", bit_timing);
+        printf("TDC reg value: %lX\n", trans_delay_comp);
         
         // Reset the DBTP register values
         bit_timing &= ~(CANFD_DBTP_DSJW_MASK      | 
@@ -338,12 +186,32 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
 
         trans_delay_comp |= CANFD_DELAY_COMPENSATION_OFFSET(tdc);
 
-        spiRegisterWrite(DBTP, bit_timing);
+        printf("Intended BT reg value: %lX\n", bit_timing);
+        printf("Intended TDC reg value: %lX\n", trans_delay_comp);
 
-        spiRegisterWrite(TDCR, trans_delay_comp);
+        spiRegisterWrite(DBTP, bit_timing, NULL);
+
+        spiRegisterWrite(TDCR, trans_delay_comp, NULL);
+
+
+        bit_timing = spiRegisterRead(DBTP);
+        trans_delay_comp = spiRegisterRead(TDCR);
+
+        printf("New BT reg value: %lX\n", bit_timing);
+        printf("New TDC reg value: %lX\n", trans_delay_comp);
     }
 
     // MRAM Init
+
+    spiRegisterWrite(SIDFC, 0x0, NULL);
+    spiRegisterWrite(XIDFC, 0x0, NULL);
+    spiRegisterWrite(RXF0C, 0x0, NULL);
+    spiRegisterWrite(RXF1C, 0x0, NULL);
+    spiRegisterWrite(RXBC, 0x0, NULL);
+    spiRegisterWrite(RXESC, 0x0, NULL);
+    spiRegisterWrite(TXEFC, 0x0, NULL);
+    spiRegisterWrite(TXBC, 0x0, NULL);
+    spiRegisterWrite(TXESC, 0x0, NULL);
     
     uint32_t sid        = spiRegisterRead(SIDFC);
     uint32_t xid        = spiRegisterRead(XIDFC);
@@ -355,8 +223,10 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
     uint32_t txb        = spiRegisterRead(TXBC);
     uint32_t tx         = spiRegisterRead(TXESC);
 
-    printf("MRAM content:\nSID: %lu\nXID: %lu\nRXF0: %lu\nRXF1: %lu\nRXB: %lu\nRX: %lu\nTX_FIFO: %lu\nTXB: %lu\nTX: %lu\n",
+    printf("\n\n---------------------------------------------------------------------\n\n");
+    printf("MRAM content:\nSID: %lX\nXID: %lX\nRXF0: %lX\nRXF1: %lX\nRXB: %lX\nRX: %lX\nTX_FIFO: %lX\nTXB: %lX\nTX: %lX\n",
             sid, xid, rxf0, rxf1, rxb, rx, tx_fifo, txb, tx);
+    printf("---------------------------------------------------------------------\n\n");
 
     sid &= ~(SID_LSS_MASK |
              SID_FLSS_MASK);
@@ -432,18 +302,20 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
 
     tx |= TX_TBDS(MRAM -> TX_TBDS);
 
-    printf("Updated MRAM content:\nSID: %lu\nXID: %lu\nRXF0: %lu\nRXF1: %lu\nRXB: %lu\nRX: %lu\nTX_FIFO: %lu\nTXB: %lu\nTX: %lu\n",
+    printf("Intended MRAM content:\nSID: %lX\nXID: %lX\nRXF0: %lX\nRXF1: %lX\nRXB: %lX\nRX: %lX\nTX_FIFO: %lX\nTXB: %lX\nTX: %lX\n",
             sid, xid, rxf0, rxf1, rxb, rx, tx_fifo, txb, tx);
+    printf("---------------------------------------------------------------------\n\n");
 
-    spiRegisterWrite(SIDFC, sid);
-    spiRegisterWrite(XIDFC, xid);
-    spiRegisterWrite(RXF0C, rxf0);
-    spiRegisterWrite(RXF1C, rxf1);
-    spiRegisterWrite(RXBC, rxb);
-    spiRegisterWrite(RXESC, rx);
-    spiRegisterWrite(TXEFC, tx_fifo);
-    spiRegisterWrite(TXBC, txb);
-    spiRegisterWrite(TXESC, tx);
+
+    spiRegisterWrite(SIDFC, sid, NULL);
+    spiRegisterWrite(XIDFC, xid, NULL);
+    spiRegisterWrite(RXF0C, rxf0, NULL);
+    spiRegisterWrite(RXF1C, rxf1, NULL);
+    spiRegisterWrite(RXBC, rxb, NULL);
+    spiRegisterWrite(RXESC, rx, NULL);
+    spiRegisterWrite(TXEFC, tx_fifo, NULL);
+    spiRegisterWrite(TXBC, txb, NULL);
+    spiRegisterWrite(TXESC, tx, NULL);
     
     sid =spiRegisterRead(SIDFC);
     xid = spiRegisterRead(XIDFC);
@@ -456,21 +328,33 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
     tx = spiRegisterRead(TXESC);
     
 
-    printf("New MRAM regs content:\nSID: %lu\nXID: %lu\nRXF0: %lu\nRXF1: %lu\nRXB: %lu\nRX: %lu\nTX_FIFO: %lu\nTXB: %lu\nTX: %lu\n",
+
+    printf("New MRAM regs content:\nSID: %lX\nXID: %lX\nRXF0: %lX\nRXF1: %lX\nRXB: %lX\nRX: %lX\nTX_FIFO: %lX\nTXB: %lX\nTX: %lX\n",
             sid, xid, rxf0, rxf1, rxb, rx, tx_fifo, txb, tx);
+    printf("---------------------------------------------------------------------\n\n");
 
     // Put the TCAN45xx device into "NORMAL" mode
-    spiRegisterWrite(MODE_SEL, NORMAL_MODE);
-    printf("Device in NORMAL_MODE, init_can successful\n");
 
     uint32_t selected_mode = spiRegisterRead(MODE_SEL);
 
-    printf("New selected mode: %lu\n", selected_mode);
+    printf("Initial device mode: %lX\n", selected_mode);
 
-*/
+    selected_mode &= ~CLEAN_MODE;
+    selected_mode |= NORMAL_MODE;
+
+    printf("Intended mode: %lX\n", selected_mode);
+
+    spiRegisterWrite(MODE_SEL, selected_mode, NULL);
+    printf("Device in NORMAL_MODE, init_can successful\n");
+
+    selected_mode = spiRegisterRead(MODE_SEL);
+
+    printf("New selected mode: %lX\n", selected_mode);
+
+
     return 0;
 }
-/*
+
 uint8_t setSIDFilters(SID_filter * filters, TiMRAMParams * MRAM) 
 {
     size_t size = (size_t) MRAM -> SID_LSS;
@@ -486,7 +370,7 @@ uint8_t setSIDFilters(SID_filter * filters, TiMRAMParams * MRAM)
         filter |= SID_SFID1 (filters[i].SFID_1);
         filter |= SID_SFID2 (filters[i].SFID_2);
 
-        spiRegisterWrite(filter_addr + i * sizeof(uint32_t), filter);
+        spiRegisterWrite(filter_addr + i * sizeof(uint32_t), filter, NULL);
     }
 
     return 0;
@@ -514,13 +398,13 @@ uint8_t setXIDFilters(XID_filter * filters, TiMRAMParams * MRAM)
 
         filter |= (filter_1 | filter_2);
 
-        spiRegisterWrite(filter_addr + i, filter);
+        spiRegisterWrite(filter_addr + i, filter, NULL);
     }
 
     return 0;
 }
 
-uint8_t sendCAN(TiMRAMParams * MRAM, TXElement * TXE)
+uint8_t sendCAN(TiMRAMParams * MRAM, TXFIFOElement * TXE)
 {
     // Check that any TX Buffer is vacant
     uint32_t free_level = spiRegisterRead(TXFQS);
@@ -532,8 +416,11 @@ uint8_t sendCAN(TiMRAMParams * MRAM, TXElement * TXE)
     
     if (!(TFFL(free_level)))
     {
+        printf("ERROR: No TX BUffers Available, return 1\n");
         return 1;
     }
+
+    printf("Free buffers: %lX\n", TFFL(free_level));
 
     uint32_t index = TFQPI(free_level);
 
@@ -556,7 +443,7 @@ uint8_t sendCAN(TiMRAMParams * MRAM, TXElement * TXE)
         word_0 |= ((TXE -> ID) << SID_SHFT);
     }
 
-    spiRegisterWrite(memory_offset, word_0);
+    spiRegisterWrite(memory_offset, word_0, NULL);
 
     word_1 |= ((TXE -> MM) << MM_SHFT);
 
@@ -566,22 +453,80 @@ uint8_t sendCAN(TiMRAMParams * MRAM, TXElement * TXE)
     
     word_1 |= ((TXE -> DLC) << DLC_SHFT);
 
-    spiRegisterWrite(memory_offset + sizeof(word_0), word_1);
+    spiRegisterWrite(memory_offset + sizeof(word_0), word_1, NULL);
 
     word_2 |= ( ((TXE -> data_byte_0) << DB0_SHFT)   |
                 ((TXE -> data_byte_1) << DB1_SHFT)   |
                 ((TXE -> data_byte_2) << DB2_SHFT)   |
                 ((TXE -> data_byte_3) << DB3_SHFT)   );
     
-    spiRegisterWrite(memory_offset + sizeof(word_0) + sizeof(word_1), word_2);
+    spiRegisterWrite(memory_offset + sizeof(word_0) + sizeof(word_1), word_2, NULL);
+
+    printf("Words to send:\nWORD_0: %lX\nWORD_1: %lX\nWORD_2: %lX\n", word_0, word_1, word_2);
 
     uint32_t add_request = 0;
 
     add_request |= (1U << index);
 
-    spiRegisterWrite(TXBUF_AR, add_request);
+    spiRegisterWrite(TXBUF_AR, add_request, NULL);
 
     return 0;
 }
 
-*/
+
+uint8_t spiRegisterWrite(uint16_t reg_addr, uint32_t reg_value, uint32_t * pointer) {
+
+    uint8_t tx_buffer[] =
+    {
+        0x04,
+        (uint8_t)(reg_value >> 24),
+        (uint8_t)(reg_value >> 16), 
+        (uint8_t)(reg_value >> 8),  
+        (uint8_t)(reg_value) 
+    };
+
+    spi_transaction_t t;
+    
+    memset(&t, 0, sizeof(spi_transaction_t)); 
+
+    t.cmd = SPI_WRITE_OPCODE;
+    t.addr = reg_addr;
+    t.length = 5 * 8; // length byte
+    t.rxlength = 5 * 8;
+    t.rx_buffer = NULL;
+    t.tx_buffer = tx_buffer;
+
+    // Transmit the dummy bytes to read the actual data
+    spi_device_transmit(spi, &t);
+
+    return 0;
+}
+
+
+uint32_t spiRegisterRead(uint16_t reg_addr) {
+    
+    // TODO: Process global status byte
+    // TODO: Consider switching to working with pointers
+
+    uint8_t rx_buffer[5];
+
+    spi_transaction_t t;
+    
+    memset(&t, 0, sizeof(spi_transaction_t)); 
+
+    t.cmd = SPI_READ_OPCODE;
+    t.addr = reg_addr;
+    t.length = 5 * 8; // length byte
+    t.rxlength = 5 * 8;
+    t.rx_buffer = rx_buffer;
+    t.tx_buffer = NULL;
+
+    // Transmit the dummy bytes to read the actual data
+    spi_device_transmit(spi, &t);
+
+    // Combine the received bytes into a 32-bit value
+    uint32_t reg_value = ((uint64_t)rx_buffer[1] << 24) |
+                ((uint64_t)rx_buffer[2] << 16) | ((uint64_t)rx_buffer[3] << 8) | (rx_buffer[4]);
+
+    return reg_value;
+}
