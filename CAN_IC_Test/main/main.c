@@ -5,6 +5,7 @@ void app_main(void)
 {
     BitTimingParams   bTParams;
     TiMRAMParams      MRAM;
+    TXFIFOElement     TX;
 
     bTParams.prescaler       = 3;
     bTParams.prop_and_phase1 = 6;
@@ -55,6 +56,7 @@ void app_main(void)
     MRAM.TX_TBDS = 0x7;
 
 
+    // Testing INIT
 
     uint8_t result = initCAN(&bTParams, &MRAM);
 
@@ -68,9 +70,35 @@ void app_main(void)
     }
 
 
-    // Test of lib END*/
+    // Testing sendCAN, message sending
 
-    //printf("Device is ready to send CAN messages");
-    printf("DONE!");
+    TX.ESI = false;
+    TX.XTD = false;
+    TX.RTR = false;
+
+    TX.ID = 0b11010100101;
+    TX.MM = 0x1;
+    TX.EFC = false;
+
+    TX.FDF = false;
+    TX.BRS = false;
+    TX.DLC = 0x04;
+
+    TX.data_byte_0 = 0x11;
+    TX.data_byte_1 = 0x22;
+    TX.data_byte_2 = 0x33;
+    TX.data_byte_3 = 0x44;
+
+
+    uint8_t send_result = sendCAN(&MRAM, &TX);
+
+    if (!result)
+    {
+        printf("CAN message sent successfully\n");
+    }
+    else
+    {
+        printf("CAN message sending failed\n");
+    }
 
 }
