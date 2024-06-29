@@ -142,6 +142,11 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
 
         printf("Intended NBTP value: %lX\n", bit_timing);
 
+        //
+        // HARDCODED
+        //
+        //bit_timing = 0x02030601;
+
         spiRegisterWrite(NBTP, bit_timing, NULL);
 
         bit_timing = spiRegisterRead(NBTP);
@@ -302,6 +307,24 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
 
     tx |= TX_TBDS(MRAM -> TX_TBDS);
 
+////////////////////////////////////////
+/// HARDCODED ///
+////////////////////////////////////////
+
+    // sid = 0x00020000;
+    // xid = 0x010008;
+    // rxf0 = 0x02040010;
+    // rxf1 = 0x030500F0;
+    // rxb = 0x00;
+    // rx = 0x076;
+    // tx_fifo = 0x02030258;
+    // txb = 0x0A000270;
+    // tx = 0x07;
+
+////////////////////////////////////////
+/// HARDCODED ///
+////////////////////////////////////////
+
     printf("Intended MRAM content:\nSID: %lX\nXID: %lX\nRXF0: %lX\nRXF1: %lX\nRXB: %lX\nRX: %lX\nTX_FIFO: %lX\nTXB: %lX\nTX: %lX\n",
             sid, xid, rxf0, rxf1, rxb, rx, tx_fifo, txb, tx);
     printf("---------------------------------------------------------------------\n\n");
@@ -317,7 +340,7 @@ uint8_t initCAN (const BitTimingParams  * bTParams,
     spiRegisterWrite(TXBC, txb, NULL);
     spiRegisterWrite(TXESC, tx, NULL);
     
-    sid =spiRegisterRead(SIDFC);
+    sid = spiRegisterRead(SIDFC);
     xid = spiRegisterRead(XIDFC);
     rxf0 = spiRegisterRead(RXF0C);
     rxf1 = spiRegisterRead(RXF1C);
@@ -406,7 +429,7 @@ uint8_t setXIDFilters(XID_filter * filters, TiMRAMParams * MRAM)
 
 uint8_t sendCAN(TiMRAMParams * MRAM, TXFIFOElement * TXE)
 {
-    // Check that any TX Buffer is vacant
+    /*// Check that any TX Buffer is vacant
     uint32_t free_level = spiRegisterRead(TXFQS);
 
     uint32_t tx_buffer_start_addr = MRAM -> TXB_TBSA;
@@ -468,7 +491,32 @@ uint8_t sendCAN(TiMRAMParams * MRAM, TXFIFOElement * TXE)
 
     add_request |= (1U << index);
 
-    spiRegisterWrite(TXBUF_AR, add_request, NULL);
+    spiRegisterWrite(TXBUF_AR, add_request, NULL);*/
+
+    // uint32_t free_level = spiRegisterRead(TXFQS);
+
+    // if (!(TFFL(free_level)))
+    // {
+    //     printf("ERROR: No TX BUffers Available, return 1\n");
+    //     return 1;
+    // }
+
+    // printf("Free buffers: %lX\n", TFFL(free_level));
+
+    // uint32_t index = TFQPI(free_level);
+
+    // printf("Index: %lX\n", index);
+
+    // uint32_t reg_bits = spiRegisterRead(0x10C4);
+
+    // printf("Reg value: %lX\n", reg_bits);
+
+    spiRegisterWrite(0x8270, 0x52345678, NULL);
+    spiRegisterWrite(0x8270 + 4, 0x01B70000, NULL);
+    spiRegisterWrite(0x8270 + 2*4, 0x44332211, NULL);
+    spiRegisterWrite(0x8270 + 3*4, 0x00776655, NULL);
+    spiRegisterWrite(0x10D0, 0x01, NULL);
+
 
     return 0;
 }
